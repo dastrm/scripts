@@ -30,8 +30,9 @@ using Plots
     return (sin(2*pi*(x+0.5))+1)/2
 end
 
-@parallel_indices (j) function sample_profile!(u, xc)
-	u[j] = profile(xc[j])
+@parallel_indices (j) function sample_profile!(u, xc, dx)
+	#u[j] = profile(xc[j])
+	u[j] = (profile(xc[j]-0.5*dx) + 4*profile(xc[j]) + profile(xc[j]+0.5*dx))/6
     return
 end
 
@@ -64,7 +65,7 @@ end
 @views function recon_const(dx, nx, Lx, xc)
 	u = @zeros(nx)
 	
-	@parallel sample_profile!(u, xc)
+	@parallel sample_profile!(u, xc, dx)
 
 	for j=1:nx
 		plot!([(xc[j]-0.5*dx, u[j]), (xc[j]+0.5*dx, u[j])]; label=j==1 ? "const" : :none, xlims=(0, Lx), color="blue")
@@ -77,7 +78,7 @@ end
 	um = @zeros(nx)
 	up = @zeros(nx)
 
-	@parallel sample_profile!(u, xc)
+	@parallel sample_profile!(u, xc, dx)
 	@parallel compute_central_slope!(s, u, dx, nx)
 	@parallel compute_edge_values!(um, up, u, s, dx)
 
@@ -92,7 +93,7 @@ end
 	um = @zeros(nx)
 	up = @zeros(nx)
 
-	@parallel sample_profile!(u, xc)
+	@parallel sample_profile!(u, xc, dx)
 	@parallel compute_minmod_slope!(s, u, dx, nx)
 	@parallel compute_edge_values!(um, up, u, s, dx)
 
@@ -108,7 +109,7 @@ end
 	um = @zeros(nx)
 	up = @zeros(nx)
 
-	@parallel sample_profile!(u, xc)
+	@parallel sample_profile!(u, xc, dx)
 	@parallel compute_central_slope!(sc, u, dx, nx)
 	@parallel compute_minmod_slope!(sm, u, dx, nx)
 
@@ -188,7 +189,7 @@ end
 	um = @zeros(nx)
 	up = @zeros(nx)
 
-	@parallel sample_profile!(u, xc)
+	@parallel sample_profile!(u, xc, dx)
 	@parallel compute_central_slope!(s, u, dx, nx)
 	@parallel compute_weno_smoothness!(b0, b1, b2, s, dx, nx)
 	@parallel compute_weno_weights!(w0, w1, w2, b0, b1, b2, nx)
